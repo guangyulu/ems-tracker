@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMS 배송 조회</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 16px 20px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="text"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .usage-info {
+            background: #f0f7ff;
+            border: 2px solid #b3d9ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #1a5490;
+        }
+        
+        .usage-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #fee;
+            border: 2px solid #fcc;
+            border-radius: 10px;
+            padding: 20px;
+            color: #c33;
+            margin-top: 20px;
+        }
+        
+        .tracking-results {
+            margin-top: 30px;
+        }
+        
+        .tracking-header {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .tracking-number {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .tracking-status {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #4caf50;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .timeline-item:hover {
+            background: #f0f2ff;
+            transform: translateX(5px);
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -44px;
+            top: 25px;
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #667eea;
+        }
+        
+        .timeline-date {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .timeline-content {
+            color: #333;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        
+        .info-box {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px 20px;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 Zayi Sports LAB 배송 조회</h1>
+        <p class="subtitle">중국 → 한국 실시간 배송 추적</p>
+        
+        <div id="usageInfo" class="usage-info">
+            이번 달 사용량: <strong id="usageCount">0</strong> / 100회
+        </div>
+        
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="trackingNumber" 
+                placeholder="운송장 번호를 입력하세요 (예: RR123456789CN)"
+                autocomplete="off"
+            >
+            <button id="searchBtn" onclick="searchTracking()">🔍 조회</button>
+        </div>
+        
+        <div id="results"></div>
+        
+        <div class="info-box">
+            <p><strong>💡 사용 안내</strong></p>
+            <p>• 운송장 번호를 입력하고 조회 버튼을 클릭하세요</p>
+            <p>• Zayi Sports LAB 주문 전용 배송 조회 서비스입니다</p>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ 여기에 Cloudflare Workers URL을 입력하세요
+        const API_ENDPOINT = 'https://ems-tracker.pocket8304.workers.dev/';
+        
+        // 번역 매핑 테이블
+        const translations = {
+            '【KR】已妥投': '【KR】배송 완료',
+            '【KR】安排投递': '【KR】배송 준비 중',
+            '已到达【KR】投递局': '【KR】배송국 도착',
+            '寄达地海关允许进口': '도착지 세관 수입 허가',
+            '送交境外进口海关': '해외 수입 세관으로 이송됨',
+            '到达寄达地': '도착지 도착',
+            '到达寄达地处理中心': '도착지 처리센터 도착',
+            '离开口岸': '출항 완료',
+            '送交承运商': '운송사에 인도됨',
+            '邮件离开': '에서 발송',
+            '正在发往下一站': '다음 목적지로 이동 중',
+            '已出口直封': '에서 직접 수출 봉인 완료',
+            '出口海关/放行': '수출 세관 통과/통관 완료',
+            '送交出口海关': '수출 세관으로 이송됨',
+            '邮件到达': '도착',
+            '因天气原因，邮件时限可能会受到影响，我们将竭尽全力加快处理，请您耐心等待，由此给您带来的不便敬请谅解。': '날씨로 인해 배송 지연이 발생할 수 있습니다. 최대한 신속히 처리하겠습니다. 불편을 드려 죄송합니다.',
+            '出口海关/留存待验': '수출 세관 보류/검사 대기 중',
+            '邮件已在': '에서 분류 완료',
+            '完成分拣，准备发出': '발송 준비 중',
+            '中国邮政 已收取邮件': '중국우정에서 물품 접수 완료',
+            '【山东省威海市国际互换局】': '【산둥성 웨이하이 국제교환국】',
+            '【青岛市国际互换局】': '【칭다오 국제교환국】',
+            '【青岛市云河路第二揽投部】': '【칭다오 윈허로 제2집하센터】',
+            '【青岛国际】': '【칭다오 국제】',
+            '山东省威海市国际互换局': '산둥성 웨이하이 국제교환국',
+            '青岛市国际互换局': '칭다오 국제교환국',
+            '青岛市云河路第二揽投部': '칭다오 윈허로 제2집하센터'
+        };
+
+        // 로컬 스토리지에서 사용량 가져오기
+        function getUsageCount() {
+            const data = JSON.parse(localStorage.getItem('emsUsage') || '{"count":0,"month":""}');
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            
+            if (data.month !== currentMonth) {
+                data.count = 0;
+                data.month = currentMonth;
+                localStorage.setItem('emsUsage', JSON.stringify(data));
+            }
+            
+            return data.count;
+        }
+
+        // 사용량 증가
+        function incrementUsage() {
+            const data = JSON.parse(localStorage.getItem('emsUsage') || '{"count":0,"month":""}');
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            
+            data.count++;
+            data.month = currentMonth;
+            localStorage.setItem('emsUsage', JSON.stringify(data));
+            
+            updateUsageDisplay();
+            
+            // 90회 도달 시 경고
+            if (data.count === 90) {
+                alert('⚠️ 이번 달 사용량이 90회에 도달했습니다!\npocket8304@gmail.com으로 알림 메일이 전송됩니다.');
+                sendEmailAlert(data.count);
+            }
+            
+            return data.count;
+        }
+
+        // 사용량 표시 업데이트
+        function updateUsageDisplay() {
+            const count = getUsageCount();
+            document.getElementById('usageCount').textContent = count;
+            const usageInfo = document.getElementById('usageInfo');
+            
+            if (count >= 90) {
+                usageInfo.className = 'usage-info usage-warning';
+                usageInfo.innerHTML = `⚠️ 이번 달 사용량: <strong>${count}</strong> / 100회 (곧 한도 도달!)`;
+            } else {
+                usageInfo.className = 'usage-info';
+                usageInfo.innerHTML = `이번 달 사용량: <strong>${count}</strong> / 100회`;
+            }
+        }
+
+        // 이메일 알림 전송
+        async function sendEmailAlert(count) {
+            try {
+                await fetch(API_ENDPOINT.replace('/track', '/alert'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'pocket8304@gmail.com',
+                        count: count
+                    })
+                });
+            } catch (error) {
+                console.error('이메일 알림 전송 실패:', error);
+            }
+        }
+
+        // 텍스트 번역
+        function translateText(text) {
+            // 특수 처리: 威海/仁川 WHWDHY/INCHEON, 到达口岸
+            if (text.includes('到达口岸')) {
+                if (text.includes('威海 WHWDHY') || text.includes('仁川 INCHEON')) {
+                    return text.replace(/威海 WHWDHY, 到达口岸|仁川 INCHEON, 到达口岸/g, '인천 INCHEON, 입항 완료');
+                }
+            }
+            
+            // 일반 번역
+            let translated = text;
+            for (const [cn, kr] of Object.entries(translations)) {
+                translated = translated.replace(new RegExp(cn, 'g'), kr);
+            }
+            
+            // 도시명 번역
+            translated = translated.replace(/威海市/g, '웨이하이시');
+            translated = translated.replace(/威海/g, '웨이하이');
+            translated = translated.replace(/青岛市/g, '칭다오시');
+            translated = translated.replace(/青岛/g, '칭다오');
+            
+            return translated;
+        }
+
+        // 배송 조회
+        async function searchTracking() {
+            const trackingNumber = document.getElementById('trackingNumber').value.trim();
+            const resultsDiv = document.getElementById('results');
+            const searchBtn = document.getElementById('searchBtn');
+            
+            if (!trackingNumber) {
+                alert('운송장 번호를 입력해주세요!');
+                return;
+            }
+            
+            // 로딩 상태
+            searchBtn.disabled = true;
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>조회 중입니다...</div>';
+            
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ trackingNumber })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || '조회에 실패했습니다');
+                }
+                
+                // 사용량 증가
+                incrementUsage();
+                
+                // 결과 표시
+                displayResults(data);
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ 오류 발생</h3>
+                        <p>${error.message}</p>
+                        <p>운송장 번호를 확인하거나 잠시 후 다시 시도해주세요.</p>
+                    </div>
+                `;
+            } finally {
+                searchBtn.disabled = false;
+            }
+        }
+
+        // 결과 표시
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (!data.tracks || data.tracks.length === 0) {
+                resultsDiv.innerHTML = '<div class="error">배송 정보를 찾을 수 없습니다.</div>';
+                return;
+            }
+            
+            const track = data.tracks[0];
+            let html = `
+                <div class="tracking-results">
+                    <div class="tracking-header">
+                        <div class="tracking-number">📦 ${track.number}</div>
+                        <span class="tracking-status">${translateText(track.status || '조회됨')}</span>
+                    </div>
+                    <div class="timeline">
+            `;
+            
+            if (track.events && track.events.length > 0) {
+                track.events.forEach(event => {
+                    const translatedContent = translateText(event.description || event.content || '정보 없음');
+                    html += `
+                        <div class="timeline-item">
+                            <div class="timeline-date">${event.time || event.date || ''}</div>
+                            <div class="timeline-content">${translatedContent}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<div class="timeline-item"><div class="timeline-content">배송 정보가 아직 업데이트되지 않았습니다.</div></div>';
+            }
+            
+            html += '</div></div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        // Enter 키 지원
+        document.getElementById('trackingNumber').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchTracking();
+            }
+        });
+
+        // 페이지 로드 시 사용량 표시
+        updateUsageDisplay();
+        
+        // 입력창 자동 포커스
+        window.addEventListener('load', function() {
+            document.getElementById('trackingNumber').focus();
+        });
+    </script>
+</body>
+</html>
