@@ -337,8 +337,12 @@
         // 사용량 표시 업데이트
         function updateUsageDisplay() {
             const count = getUsageCount();
-            document.getElementById('usageCount').textContent = count;
+            const usageCountEl = document.getElementById('usageCount');
             const usageInfo = document.getElementById('usageInfo');
+            
+            if (!usageCountEl || !usageInfo) return; // 안전 체크
+            
+            usageCountEl.textContent = count;
             
             if (count >= 90) {
                 usageInfo.className = 'usage-info usage-warning';
@@ -489,5 +493,4 @@
         });
     </script>
 </body>
-
 </html>
