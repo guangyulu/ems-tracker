@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMS 배송 조회</title>
+    <title>배송 조회</title>
     <style>
         * {
             margin: 0;
@@ -86,23 +86,6 @@
             transform: none;
         }
         
-        .usage-info {
-            background: #f0f7ff;
-            border: 2px solid #b3d9ff;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 14px;
-            color: #1a5490;
-        }
-        
-        .usage-warning {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            color: #856404;
-        }
-        
         .loading {
             text-align: center;
             padding: 40px;
@@ -118,11 +101,6 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
-        }
-        
-        .loading-dots {
-            font-size: 24px;
-            letter-spacing: 4px;
         }
         
         .spinner {
@@ -275,12 +253,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>📦 Zayi Sports LAB 배송 조회</h1>
-        <p class="subtitle">중국 → 한국 실시간 배송 추적</p>
-        
-        <div id="usageInfo" class="usage-info">
-            이번 달 사용량: <strong id="usageCount">0</strong> / 100회
-        </div>
+        <h1>📦 자이 스포츠랩 전용 배송 조회</h1>
+        <p class="subtitle">결제 완료 후 영업일 기준 7일 후부터 배송 조회가 가능합니다.</p>
         
         <div class="search-box">
             <input 
@@ -297,134 +271,67 @@
         <div class="info-box">
             <p><strong>💡 사용 안내</strong></p>
             <p>• 운송장 번호를 입력하고 조회 버튼을 클릭하세요</p>
-            <p>• Zayi Sports LAB 주문 전용 배송 조회 서비스입니다</p>
+            <p>• 자이 스포츠랩 주문 전용 배송 조회 서비스입니다</p>
         </div>
     </div>
 
     <script>
-        // ⚠️ 여기에 Cloudflare Workers URL을 입력하세요
         const API_ENDPOINT = 'https://ems-tracker.pocket8304.workers.dev/track';
         
         // 번역 매핑 테이블
         const translations = {
             '【KR】已妥投': '【KR】배송 완료',
             '【KR】安排投递': '【KR】배송 준비 중',
-            '已到达【KR】投递局': '【KR】배송국 도착',
-            '寄达地海关允许进口': '도착지 세관 수입 허가',
+            '已到达【KR】投递局': '【KR】배달 우체국 도착',
+            '到达境外经转局': '해외 환적국 도착',
+            '离开【韩国】处理中心': '【한국】처리센터 출발',
+            '寄达地海关允许进口': '도착국 세관 통관 허가',
+            '境外进口海关留存待验（等待提交给边境机构/安全部门）': '해외 수입 세관 보류 중 (국경기관/안전부서 제출 대기)',
             '送交境外进口海关': '해외 수입 세관으로 이송됨',
-            '到达寄达地': '도착지 도착',
-            '到达寄达地处理中心': '도착지 처리센터 도착',
-            '离开口岸': '출항 완료',
-            '送交承运商': '운송사에 인도됨',
-            '邮件离开': '에서 발송',
+            '到达寄达地处理中心': '도착국 처리센터 도착',
+            '威海 WHWDHY, 离开口岸': '웨이하이(威海) WHWDHY, 출항',
+            '送交承运商': '운송업체에 인계됨',
+            '邮件离开': '에서 출발',
             '正在发往下一站': '다음 목적지로 이동 중',
-            '已出口直封': '에서 직접 수출 봉인 완료',
-            '出口海关/放行': '수출 세관 통과/통관 완료',
+            '已出口直封': '에서 수출 직봉 완료',
+            '出口海关/放行': '수출 세관 통과',
             '送交出口海关': '수출 세관으로 이송됨',
             '邮件到达': '도착',
-            '因天气原因，邮件时限可能会受到影响，我们将竭尽全力加快处理，请您耐心等待，由此给您带来的不便敬请谅解。': '날씨로 인해 배송 지연이 발생할 수 있습니다. 최대한 신속히 처리하겠습니다. 불편을 드려 죄송합니다.',
-            '出口海关/留存待验': '수출 세관 보류/검사 대기 중',
+            '因天气原因，邮件时限可能会受到影响，我们将竭尽全力加快处理，请您耐心等待，由此给您带来的不便敬请谅解。': '기상 사유로 인해 배송 지연이 발생할 수 있습니다. 최대한 신속히 처리하겠습니다. 불편을 끼쳐드려 죄송합니다.',
+            '出口海关/留存待验': '수출 세관 보류 중',
             '邮件已在': '에서 분류 완료',
             '完成分拣，准备发出': '발송 준비 중',
-            '中国邮政 已收取邮件': '중국우정에서 물품 접수 완료',
+            '中国邮政 已收取邮件': '중국우정에서 우편물을 수거함',
             '【山东省威海市国际互换局】': '【산둥성 웨이하이 국제교환국】',
             '【青岛市国际互换局】': '【칭다오 국제교환국】',
-            '【青岛市云河路第二揽投部】': '【칭다오 윈허로 제2집하센터】',
+            '【青岛市云河路第二揽投部】': '【운허로 제2집하소】',
             '【青岛国际】': '【칭다오 국제】',
             '山东省威海市国际互换局': '산둥성 웨이하이 국제교환국',
             '青岛市国际互换局': '칭다오 국제교환국',
-            '青岛市云河路第二揽投部': '칭다오 윈허로 제2집하센터'
+            '青岛市云河路第二揽投部': '운허로 제2집하소',
+            '青岛国际': '칭다오 국제'
         };
-
-        // 로컬 스토리지에서 사용량 가져오기
-        function getUsageCount() {
-            const data = JSON.parse(localStorage.getItem('emsUsage') || '{"count":0,"month":""}');
-            const currentMonth = new Date().toISOString().slice(0, 7);
-            
-            if (data.month !== currentMonth) {
-                data.count = 0;
-                data.month = currentMonth;
-                localStorage.setItem('emsUsage', JSON.stringify(data));
-            }
-            
-            return data.count;
-        }
-
-        // 사용량 증가
-        function incrementUsage() {
-            const data = JSON.parse(localStorage.getItem('emsUsage') || '{"count":0,"month":""}');
-            const currentMonth = new Date().toISOString().slice(0, 7);
-            
-            data.count++;
-            data.month = currentMonth;
-            localStorage.setItem('emsUsage', JSON.stringify(data));
-            
-            updateUsageDisplay();
-            
-            // 90회 도달 시 경고
-            if (data.count === 90) {
-                alert('⚠️ 이번 달 사용량이 90회에 도달했습니다!\npocket8304@gmail.com으로 알림 메일이 전송됩니다.');
-                sendEmailAlert(data.count);
-            }
-            
-            return data.count;
-        }
-
-        // 사용량 표시 업데이트
-        function updateUsageDisplay() {
-            const count = getUsageCount();
-            const usageCountEl = document.getElementById('usageCount');
-            const usageInfo = document.getElementById('usageInfo');
-            
-            if (!usageCountEl || !usageInfo) return; // 안전 체크
-            
-            usageCountEl.textContent = count;
-            
-            if (count >= 90) {
-                usageInfo.className = 'usage-info usage-warning';
-                usageInfo.innerHTML = `⚠️ 이번 달 사용량: <strong>${count}</strong> / 100회 (곧 한도 도달!)`;
-            } else {
-                usageInfo.className = 'usage-info';
-                usageInfo.innerHTML = `이번 달 사용량: <strong>${count}</strong> / 100회`;
-            }
-        }
-
-        // 이메일 알림 전송
-        async function sendEmailAlert(count) {
-            try {
-                await fetch(API_ENDPOINT.replace('/track', '/alert'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: 'pocket8304@gmail.com',
-                        count: count
-                    })
-                });
-            } catch (error) {
-                console.error('이메일 알림 전송 실패:', error);
-            }
-        }
 
         // 텍스트 번역
         function translateText(text) {
-            // 특수 처리: 威海/仁川 WHWDHY/INCHEON, 到达口岸
-            if (text.includes('到达口岸')) {
-                if (text.includes('威海 WHWDHY') || text.includes('仁川 INCHEON')) {
-                    return text.replace(/威海 WHWDHY, 到达口岸|仁川 INCHEON, 到达口岸/g, '인천 INCHEON, 입항 완료');
-                }
+            // 特殊处理: 威海 WHWDHY, 到达口岸
+            if (text.includes('威海 WHWDHY, 到达口岸')) {
+                text = text.replace(/威海 WHWDHY, 到达口岸/g, '웨이하이(威海) WHWDHY, 인천 입항');
             }
             
             // 일반 번역
             let translated = text;
             for (const [cn, kr] of Object.entries(translations)) {
-                translated = translated.replace(new RegExp(cn, 'g'), kr);
+                translated = translated.replace(new RegExp(cn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), kr);
             }
             
             // 도시명 번역
-            translated = translated.replace(/威海市/g, '웨이하이시');
-            translated = translated.replace(/威海/g, '웨이하이');
-            translated = translated.replace(/青岛市/g, '칭다오시');
-            translated = translated.replace(/青岛/g, '칭다오');
+            translated = translated.replace(/威海市\s*\d+/g, (match) => {
+                return match.replace('威海市', '웨이하이시');
+            });
+            translated = translated.replace(/青岛市\s*\d+/g, (match) => {
+                return match.replace('青岛市', '칭다오시');
+            });
             
             return translated;
         }
@@ -442,7 +349,16 @@
             
             // 로딩 상태
             searchBtn.disabled = true;
-            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>조회 중입니다...</div>';
+            resultsDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div class="loading-text">배송 정보를 조회하는 중입니다<span class="loading-dots">...</span></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <p style="font-size: 14px; color: #999;">최대 10초 정도 소요될 수 있습니다</p>
+                </div>
+            `;
             
             try {
                 const response = await fetch(API_ENDPOINT, {
@@ -456,9 +372,6 @@
                 if (!response.ok) {
                     throw new Error(data.error || '조회에 실패했습니다');
                 }
-                
-                // 사용량 증가
-                incrementUsage();
                 
                 // 결과 표시
                 displayResults(data);
@@ -490,17 +403,17 @@
                 <div class="tracking-results">
                     <div class="tracking-header">
                         <div class="tracking-number">📦 ${track.number}</div>
-                        <span class="tracking-status">${translateText(track.status || '조회됨')}</span>
+                        <span class="tracking-status">${track.status || '조회됨'}</span>
                     </div>
                     <div class="timeline">
             `;
             
             if (track.events && track.events.length > 0) {
                 track.events.forEach(event => {
-                    const translatedContent = translateText(event.description || event.content || '정보 없음');
+                    const translatedContent = translateText(event.description || '정보 없음');
                     html += `
                         <div class="timeline-item">
-                            <div class="timeline-date">${event.time || event.date || ''}</div>
+                            <div class="timeline-date">${event.time || ''}</div>
                             <div class="timeline-content">${translatedContent}</div>
                         </div>
                     `;
@@ -519,9 +432,6 @@
                 searchTracking();
             }
         });
-
-        // 페이지 로드 시 사용량 표시
-        updateUsageDisplay();
         
         // 입력창 자동 포커스
         window.addEventListener('load', function() {
@@ -530,4 +440,3 @@
     </script>
 </body>
 </html>
-
