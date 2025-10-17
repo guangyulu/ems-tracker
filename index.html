@@ -420,12 +420,23 @@
         function displayResults(data) {
             const resultsDiv = document.getElementById('results');
             
+            // 调试：打印原始数据
+            console.log('收到的原始数据:', JSON.stringify(data, null, 2));
+            
             if (!data.tracks || data.tracks.length === 0) {
                 resultsDiv.innerHTML = '<div class="error">배송 정보를 찾을 수 없습니다.</div>';
                 return;
             }
             
             const track = data.tracks[0];
+            
+            // 调试：打印每个事件的原始描述
+            if (track.events) {
+                track.events.forEach((event, index) => {
+                    console.log(`事件${index}原始描述:`, event.description);
+                });
+            }
+            
             let html = `
                 <div class="tracking-results">
                     <div class="tracking-header">
@@ -437,7 +448,9 @@
             
             if (track.events && track.events.length > 0) {
                 track.events.forEach(event => {
-                    const translatedContent = translateText(event.description || '정보 없음');
+                    const originalDesc = event.description || '정보 없음';
+                    const translatedContent = translateText(originalDesc);
+                    console.log('原始:', originalDesc, '→ 翻译:', translatedContent);
                     html += `
                         <div class="timeline-item">
                             <div class="timeline-date">${event.time || ''}</div>
