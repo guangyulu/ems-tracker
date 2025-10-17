@@ -284,11 +284,11 @@
             '因天气原因，邮件时限可能会受到影响，我们将竭尽全力加快处理，请您耐心等待，由此给您带来的不便敬请谅解。': '기상 악화로 배송 지연 가능성이 있습니다. 신속히 처리하도록 최선을 다하겠습니다. 양해 부탁드립니다.',
             
             // 以下按逗号分割翻译
-            '【KR】已妥投': '한국에서 배달 완료',
-            '【KR】安排投递': '한국에서 배달 준비 중',
-            '已到达【KR】投递局': '한국 배달국에 도착함',
-            '到达境外经转局': '해외 중계센터에 도착함',
-            '离开【韩国】处理中心': '한국 처리센터에서 출발함',
+            '【KR】已妥投': '[KR]배달 완료',
+            '【KR】安排投递': '[KR]배달 준비 중',
+            '已到达【KR】投递局': '[KR]배달국에 도착함',
+            '到达境外经转局': '[KR]중계센터에 도착함',
+            '离开【韩国】处理中心': '[KR]처리센터에서 출발함',
             '寄达地海关允许进口': '도착지 세관 통관 완료',
             '送交境外进口海关': '해외 수입세관에 접수됨',
             '到达寄达地处理中心': '도착지 처리센터에 도착함',
@@ -300,7 +300,7 @@
             '正在发往下一站': '다음 목적지로 이동 중',
             '【山东省威海市国际互换局】已出口直封': '산둥성 웨이하이 국제교환국에서 직봉 처리됨',
             '出口海关/放行': '수출세관 통관 완료',
-            '送交出口海관': '수출세관에 접수됨',
+            '送交出口海关': '수출세관에 접수됨',
             '邮件到达【山东省威海市国际互换局】': '산둥성 웨이하이 국제교환국에 도착함',
             '邮件离开【青岛市国际互换局】': '국제교환국을 출발하여',
             '出口海关/留存待验': '수출세관에서 검사 대기 중',
@@ -313,38 +313,55 @@
         };
 
         // 城市名翻译
-        function translateCity(text) {
-            return text.replace(/青岛市/g, '칭다오시').replace(/威海市/g, '웨이하이시');
+        function translateCity(city) {
+            if (city === '青岛市') return '칭다오시';
+            if (city === '威海市') return '웨이하이시';
+            if (city === '威海 WHWDHY') return '웨이하이(WHWDHY)';
+            return city;
+        }
+
+        // 翻译单个部分
+        function translatePart(part) {
+            part = part.trim();
+            return translations[part] || part;
         }
 
         // 翻译函数
         function translateText(text) {
-            // 特殊处理：整句翻译
+            // 特殊处理：整句翻译（天气原因那句）
             if (translations[text]) {
                 return translations[text];
             }
             
-            // 提取城市编号部分
-            const match = text.match(/^(青岛市|威海市)\s*(\d+),\s*(.*)$/);
-            if (match) {
-                const city = translateCity(match[1]);
-                const content = match[3];
+            // 检查是否有城市编号格式：城市 数字, 内容
+            const cityMatch = text.match(/^(青岛市|威海市)\s*\d+,\s*(.*)$/);
+            if (cityMatch) {
+                const cityName = translateCity(cityMatch[1]);
+                const content = cityMatch[2].trim();
                 
-                // 检查是否有整句翻译
+                // 检查内容是否是整句（不包含中文逗号）
                 if (translations[content]) {
-                    return city + ', ' + translations[content];
+                    return cityName + ', ' + translations[content];
                 }
                 
-                // 按逗号分割并翻译每部分
-                const parts = content.split(/，|,/).map(part => part.trim());
-                const translatedParts = parts.map(part => translations[part] || part);
-                return city + ', ' + translatedParts.join(' ');
+                // 按中文逗号和英文逗号分割
+                const parts = content.split(/，/).map(p => p.trim());
+                const translatedParts = parts.map(p => translatePart(p));
+                return cityName + ', ' + translatedParts.join(' ');
             }
             
-            // 没有城市编号的情况
-            // 按逗号分割并翻译每部分
-            const parts = text.split(/，|,/).map(part => part.trim());
-            const translatedParts = parts.map(part => translations[part] || part);
+            // 检查是否有威海 WHWDHY格式
+            const whMatch = text.match(/^(威海 WHWDHY),\s*(.*)$/);
+            if (whMatch) {
+                const cityName = translateCity(whMatch[1]);
+                const content = whMatch[2].trim();
+                return cityName + ', ' + translatePart(content);
+            }
+            
+            // 没有城市前缀的情况
+            // 按中文逗号分割
+            const parts = text.split(/，/).map(p => p.trim());
+            const translatedParts = parts.map(p => translatePart(p));
             return translatedParts.join(' ');
         }
 
