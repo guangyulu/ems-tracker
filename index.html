@@ -448,9 +448,26 @@
             
             if (track.events && track.events.length > 0) {
                 track.events.forEach(event => {
-                    const originalDesc = event.description || '정보 없음';
-                    const translatedContent = translateText(originalDesc);
-                    console.log('原始:', originalDesc, '→ 翻译:', translatedContent);
+                    const location = event.location || '';
+                    const description = event.description || '정보 없음';
+                    
+                    // 组合location和description
+                    let fullText = description;
+                    if (location) {
+                        // 特殊处理：威海的到达口岸/离开口岸
+                        if (location === '威海' && description === '到达口岸') {
+                            fullText = '威海 WHWDHY, 到达口岸';
+                        } else if (location === '威海' && description === '离开口岸') {
+                            fullText = '威海 WHWDHY, 离开口岸';
+                        } else if (location === '威海市' || location === '青岛市') {
+                            // 其他城市情况：城市 + description
+                            fullText = location + ', ' + description;
+                        }
+                    }
+                    
+                    const translatedContent = translateText(fullText);
+                    console.log('原始:', fullText, '→ 翻译:', translatedContent);
+                    
                     html += `
                         <div class="timeline-item">
                             <div class="timeline-date">${event.time || ''}</div>
